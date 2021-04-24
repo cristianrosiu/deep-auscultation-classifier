@@ -130,6 +130,8 @@ pip-selfcheck.json
 
 .idea/
 
+.vscode/
+
 ## File-based project format:
 *.iws
 
