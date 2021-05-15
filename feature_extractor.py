@@ -2,7 +2,7 @@ import librosa
 import librosa.display
 import pandas as pd
 import math
-import numpy as np
+
 
 """
 This script allows the user to extract the mel-cepstral coefficients array from a 
@@ -24,6 +24,12 @@ functions:
 
 # In our case all audio files have the same length of 30
 AUDIO_LENGTH = 30
+
+def get_expected_len(audio_length, sampling_rate=None):
+    sample_per_audio = 4000 * audio_length
+    if sampling_rate is not None:
+        sample_per_audio = sampling_rate * audio_length
+    return math.ceil(sample_per_audio / 512)
 
 
 def extract_segmented_features(file_path, n_mfcc, num_seg, sampling_rate=None):
@@ -63,87 +69,24 @@ def extract_segmented_features(file_path, n_mfcc, num_seg, sampling_rate=None):
     return data
 
 
-def get_expected_len(audio_length, sampling_rate=None):
-    sample_per_audio = 4000 * audio_length
-    if sampling_rate is not None:
-        sample_per_audio = sampling_rate * audio_length
-    return math.ceil(sample_per_audio / 512)
-
-
-def extract_features(file_path, n_mfcc, sampling_rate=None):
-    """Returns a list which contains the mfcc features of each segment.
-    :param file_path: Path to the audio file
-    :param sampling_rate: Sampling rate value used to resample the audio. A default value of None
-    will take the original sampling rate of the audio file (in our case is 4000Hz)
-    :param n_mfcc: Number of mfcc which will be extracted over a period of time
-    :return: A list containing the MFCC features of each segment in the original audio
-    """
-
-    # Because the extracted arrays have variable length we need to calculate the maximum possible
-    # number of MFCCs that can be extracted from our audio files and then pad with 0 the arrays
-    # which have a length < max length.
-
-    expected_mfcc_len = get_expected_len(AUDIO_LENGTH, sampling_rate)
-    try:
-        audio, sample_rate = librosa.load(file_path, sr=sampling_rate, res_type='kaiser_fast')
-        mfccs = librosa.feature.mfcc(y=audio, sr=sample_rate, n_mfcc=n_mfcc)
-        pad_width = expected_mfcc_len - mfccs.shape[1]
-        mfccs = np.pad(mfccs, pad_width=((0, 0), (0, pad_width)), mode='constant')
-
-    except Exception as e:
-        print("Error encountered while parsing file: ", file_path)
-        return None
-
-    return mfccs
-
-
-def get_features_df(data, sampling_rate=None, label_row='rhonchus', n_mfcc=20):
+def get_features_df(data, sampling_rate=None, n_mfcc=20, num_seg=5):
     features = []
     for index, row in data.iterrows():
         file_name_l = 'recordings/{id}/{recording}_L.wav'.format(id=row['seal_id'], recording=row['rec_name'])
         file_name_r = 'recordings/{id}/{recording}_R.wav'.format(id=row['seal_id'], recording=row['rec_name'])
 
-        class_label_l = row[label_row + '_l']
-        class_label_r = row[label_row + '_r']
+        features_data_l = extract_segmented_features(file_name_l, n_mfcc=n_mfcc, sampling_rate=sampling_rate,
+                                                    num_seg=num_seg)
+        features_data_r = extract_segmented_features(file_name_r, n_mfcc=n_mfcc, sampling_rate=sampling_rate,
+                                                    num_seg=num_seg)
 
-        features_data_l = extract_features(file_name_l, n_mfcc=n_mfcc, sampling_rate=sampling_rate)
-        features_data_r = extract_features(file_name_r, n_mfcc=n_mfcc, sampling_rate=sampling_rate)
+        for left_lung in features_data_l:
+            features.append([left_lung, [row['whistling_l'], row['rhonchus_l']]])
+        for right_lung in features_data_r:
+            features.append([right_lung, [row['whistling_r'], row['rhonchus_r']]])
+    
 
-        if class_label_l != '?':
-            features.append([features_data_l, class_label_l])
-        if class_label_r != '?':
-            features.append([features_data_r, class_label_r])
-    features_df = pd.DataFrame(features, columns=['feature', 'class_label'])
-
-    print('Finished feature extraction from ', len(features_df), ' files')
-
-    return features_df
-
-
-def get_seg_features_df(data, sampling_rate=None, label_row='rhonchus', n_mfcc=20, num_seg=5):
-    features = []
-    for index, row in data.iterrows():
-        if label_row is 'rhonchus':
-            file_name_l = 'recordings/{id}/{recording}_L.wav'.format(id=row['seal_id'], recording=row['rec_name'])
-            file_name_r = 'recordings/{id}/{recording}_R.wav'.format(id=row['seal_id'], recording=row['rec_name'])
-            
-            class_label_l = row[label_row + '_l']
-            class_label_r = row[label_row + '_r']
-
-            features_data_l = extract_segmented_features(file_name_l, n_mfcc=n_mfcc, sampling_rate=sampling_rate,
-                                                        num_seg=num_seg)
-            features_data_r = extract_segmented_features(file_name_r, n_mfcc=n_mfcc, sampling_rate=sampling_rate,
-                                                        num_seg=num_seg)
-            if class_label_l != '?':
-                for d in features_data_l:
-                    features.append([d, class_label_l])
-            if class_label_r != '?':
-                for d in features_data_r:
-                    features.append([d, class_label_r])
-        else:
-            
-
-    features_df = pd.DataFrame(features, columns=['feature', 'class_label'])
+    features_df = pd.DataFrame(features, columns=['feature', 'class_labels'])
 
     print('Finished feature extraction from ', len(features_df), ' files')
 
