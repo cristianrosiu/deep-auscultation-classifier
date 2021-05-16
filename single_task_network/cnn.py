@@ -8,13 +8,11 @@ from datetime import datetime
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import confusion_matrix, roc_curve, auc
 from sklearn.preprocessing import LabelEncoder
-from feature_extractor import get_features_df, get_seg_features_df
-from plots_helper import plot_confusion_matrix, plot_roc, plot_history
+from feature_extractor import get_features_df
 import os, sys
 import tensorflow as tf
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from spectogram_generator import get_spec_df
-from model import get_model
 
 
 if __name__ == "__main__":

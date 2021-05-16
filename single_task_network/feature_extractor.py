@@ -123,7 +123,6 @@ def get_features_df(data, sampling_rate=None, label_row='rhonchus', n_mfcc=20):
 def get_seg_features_df(data, sampling_rate=None, label_row='rhonchus', n_mfcc=20, num_seg=5):
     features = []
     for index, row in data.iterrows():
-        if label_row is 'rhonchus':
             file_name_l = 'recordings/{id}/{recording}_L.wav'.format(id=row['seal_id'], recording=row['rec_name'])
             file_name_r = 'recordings/{id}/{recording}_R.wav'.format(id=row['seal_id'], recording=row['rec_name'])
             
@@ -140,8 +139,6 @@ def get_seg_features_df(data, sampling_rate=None, label_row='rhonchus', n_mfcc=2
             if class_label_r != '?':
                 for d in features_data_r:
                     features.append([d, class_label_r])
-        else:
-            
 
     features_df = pd.DataFrame(features, columns=['feature', 'class_label'])
 

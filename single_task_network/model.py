@@ -3,8 +3,9 @@ from keras.layers import Dense, Dropout
 from keras.layers import Conv2D, MaxPooling2D, GlobalAveragePooling2D
 from keras.optimizers import Adam
 
+
 def get_model(input_shape, num_labels, binary=False):
-    #Construct model
+    # Construct model
     model = Sequential()
 
     model.add(Conv2D(16, kernel_size=2, padding='same', input_shape=input_shape, activation='relu'))
@@ -33,7 +34,6 @@ def get_model(input_shape, num_labels, binary=False):
     else:
         model.add(Dense(units=num_labels, activation='softmax'))
         model.compile(loss='categorical_crossentropy', metrics=['accuracy'], optimizer=optimizer)
-
 
     model.summary()
 
