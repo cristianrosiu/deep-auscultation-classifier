@@ -2,7 +2,8 @@ import librosa
 import librosa.display
 import pandas as pd
 import math
-
+import numpy as np
+from matplotlib import pyplot
 
 """
 This script allows the user to extract the mel-cepstral coefficients array from a 
@@ -25,6 +26,27 @@ functions:
 # In our case all audio files have the same length of 30
 AUDIO_LENGTH = 30
 
+def scale_minmax(X, min=0.0, max=1.0):
+    X_std = (X - X.min()) / (X.max() - X.min())
+    X_scaled = X_std * (max - min) + min
+    return X_scaled
+
+
+def spectrogram_image(y, sr, hop_length, n_mels):
+    # use log-melspectrogram
+    mels = librosa.feature.melspectrogram(y=y, sr=sr, n_mels=n_mels,
+                                          n_fft=hop_length * 2, hop_length=hop_length)
+    mels = np.log(mels + 1e-9)  # add small number to avoid log(0)
+    pad_width = 227 - mels.shape[1]
+    mels = np.pad(mels, pad_width=((0, 0), (0, pad_width)), mode='constant')
+
+    # min-max scale to fit inside 8-bit range
+    img = scale_minmax(mels, 0, 255).astype(np.uint8)
+    img = np.flip(img, axis=0)  # put low frequencies at the bottom in image
+    img = 255 - img  # invert. make black==more energy
+    #pyplot.imshow(img)
+    #pyplot.show()
+    return(img)
 
 def get_expected_len(audio_length, sampling_rate=None):
     sample_per_audio = 4000 * audio_length
@@ -70,21 +92,46 @@ def extract_segmented_features(file_path, n_mfcc, num_seg, sampling_rate=None):
     return data
 
 
-def get_features_df(data, sampling_rate=None, n_mfcc=20, num_seg=5):
+def get_features_df(data, sampling_rate=None, n_mfcc=20, num_seg=5, spectogram=False):
     features = []
     for index, row in data.iterrows():
         file_name_l = 'recordings/{id}/{recording}_L.wav'.format(id=row['seal_id'], recording=row['rec_name'])
         file_name_r = 'recordings/{id}/{recording}_R.wav'.format(id=row['seal_id'], recording=row['rec_name'])
 
-        features_data_l = extract_segmented_features(file_name_l, n_mfcc=n_mfcc, sampling_rate=sampling_rate,
-                                                    num_seg=num_seg)
-        features_data_r = extract_segmented_features(file_name_r, n_mfcc=n_mfcc, sampling_rate=sampling_rate,
-                                                    num_seg=num_seg)
+        features_data_l = None
+        features_data_r = None
+        if spectogram:
+            # settings
+            hop_length = 512  # number of samples per time-step in spectrogram
+            n_mels = 128  # number of bins in spectrogram. Height of image
+            time_steps = 384  # number of time-steps. Width of image
 
-        for left_lung in features_data_l:
-            features.append([left_lung, [row['whistling_l'], row['rhonchus_l']]])
-        for right_lung in features_data_r:
-            features.append([right_lung, [row['whistling_r'], row['rhonchus_r']]])
+            # load audio. Using example from librosa
+            signal_l, sr = librosa.load(file_name_l, offset=1.0, sr=None)
+            signal_r, sr = librosa.load(file_name_r, offset=1.0, sr=None)
+
+            # extract a fixed length window
+            start_sample = 0  # starting at beginning
+            length_samples = time_steps * hop_length
+            window_l = signal_l[start_sample:start_sample + length_samples]
+            window_r = signal_r[start_sample:start_sample + length_samples]
+            features_data_l = spectrogram_image(window_l, sr, hop_length=hop_length, n_mels=n_mels)
+            features_data_r = spectrogram_image(window_r, sr, hop_length=hop_length, n_mels=n_mels)
+        else:
+            features_data_l = extract_segmented_features(file_name_l, n_mfcc=n_mfcc, sampling_rate=sampling_rate,
+                                                        num_seg=num_seg)
+            features_data_r = extract_segmented_features(file_name_r, n_mfcc=n_mfcc, sampling_rate=sampling_rate,
+                                                        num_seg=num_seg)
+        
+
+        if spectogram:
+            features.append([features_data_l, [row['whistling_l'], row['rhonchus_l']]])
+            features.append([features_data_r, [row['whistling_r'], row['rhonchus_r']]])
+        else:
+            for left_lung in features_data_l:
+                features.append([left_lung, [row['whistling_l'], row['rhonchus_l']]])
+            for right_lung in features_data_r:
+                features.append([right_lung, [row['whistling_r'], row['rhonchus_r']]])
     
 
     features_df = pd.DataFrame(features, columns=['feature', 'class_labels'])
@@ -93,28 +140,3 @@ def get_features_df(data, sampling_rate=None, n_mfcc=20, num_seg=5):
 
     return features_df
 
-
-def get_prediction(file_path, model, n_mfcc, sampling_rate=None):
-    """
-    :param file_path: Path to the audio
-    :param model: The model to be used for prediction
-    :param n_mfcc: The number of coefficients to be extracted
-    :param sampling_rate: Sampling rate
-    :return: Predicted label of the audio (i.e: 0 (OK) 1 (MILD) 2(MODERATE) 3(SEVERE)
-    """
-
-    num_rows = n_mfcc
-    num_columns = get_expected_len(AUDIO_LENGTH, sampling_rate)
-    # Always 1 for CNNs
-    num_channels = 1
-
-    # Extract the features
-    prediction_feature = extract_features(file_path, n_mfcc, sampling_rate)
-    # Make the input specific to that of a CNN
-    prediction_feature = prediction_feature.reshape(1, num_rows, num_columns, num_channels)
-
-    # Predict the label using model
-    predicted_vector = model.predict_classes(prediction_feature)
-    predicted_class = predicted_vector
-
-    return predicted_class[0]
