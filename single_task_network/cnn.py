@@ -8,18 +8,16 @@ from datetime import datetime
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import confusion_matrix, roc_curve, auc
 from sklearn.preprocessing import LabelEncoder
-from feature_extractor import get_features_df
+from feature_extractor import get_seg_features_df
 import os, sys
 import tensorflow as tf
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from spectogram_generator import get_spec_df
-
 
 if __name__ == "__main__":
     binary = True
     data = pd.read_csv('labels.csv')
     # Create the configuration of models.
-    config = Config(epoch=1000, batch=32, n_mfcc=40, num_seg=5,sr=None)
+    config = Config(epoch=500, batch=32, n_mfcc=40, num_seg=5,sr=None)
 
     # Get DataFrame with features
     features_df = get_seg_features_df(data, sampling_rate=None, n_mfcc=config.n_mfcc,label_row='whistling', num_seg=config.num_seg)
@@ -34,9 +32,9 @@ if __name__ == "__main__":
     yy = to_categorical(le.fit_transform(y))
     
     # Split the data
-    x_train, x_test, y_train, y_test = train_test_split(X, yy, test_size=0.15, random_state=42)
+    x_train, x_test, y_train, y_test = train_test_split(X, yy, test_size=0.2, random_state=42)
     if binary:
-        x_train, x_test, y_train, y_test = train_test_split(X, y, test_size=0.15, random_state=42)
+        x_train, x_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
     # Reshape the train and test sets in CNN specific format.
     x_train = x_train.reshape(x_train.shape[0], x_train.shape[1], x_train.shape[2], 1)

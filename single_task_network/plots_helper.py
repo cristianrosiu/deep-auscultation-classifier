@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
-def plot_confusion_matrix(cm, classes,
+def plot_confusion_matrix(cm, classes, save_path,
                           normalize=False,
                           title='Confusion matrix',
                           cmap=plt.cm.Blues):
@@ -35,9 +35,10 @@ def plot_confusion_matrix(cm, classes,
     plt.tight_layout()
     plt.ylabel('True label')
     plt.xlabel('Predicted label')
+    plt.savefig(save_path)
+    plt.show()
 
-
-def plot_roc(fpr, tpr, auc):
+def plot_roc(fpr, tpr, auc, save_path):
     """
         This function plots the ROC-AUC Curve
     """
@@ -48,6 +49,7 @@ def plot_roc(fpr, tpr, auc):
     plt.ylabel('True Positive Rate')
     plt.title('ROC Curve')
     plt.legend(loc='best')
+    plt.savefig(save_path)
     plt.show()
 
 
@@ -69,4 +71,15 @@ def plot_history(history, i):
     axs[1].legend(loc="upper right")
     axs[1].set_title("CNN Error")
 
+    plt.show()
+
+def plot_kfold(model_history, save_path, label='Whistling'):
+    plt.title('Accuracies vs Epochs')
+    plt.plot(model_history[0].history['val_{label}_accuracy'.format(label=label.lower())], label='{label} Training Fold 1'.format(label=label))
+    plt.plot(model_history[1].history['val_{label}_accuracy'.format(label=label.lower())], label='{label} Training Fold 2'.format(label=label))
+    plt.plot(model_history[2].history['val_{label}_accuracy'.format(label=label.lower())], label='{label} Training Fold 3'.format(label=label))
+    plt.plot(model_history[3].history['val_{label}_accuracy'.format(label=label.lower())], label='{label} Training Fold 4'.format(label=label))
+    plt.plot(model_history[4].history['val_{label}_accuracy'.format(label=label.lower())], label='{label} Training Fold 5'.format(label=label))
+    plt.legend()
+    plt.savefig(save_path)
     plt.show()
