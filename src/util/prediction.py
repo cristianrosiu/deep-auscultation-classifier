@@ -79,11 +79,12 @@ def get_prediction(file_path, model_path, sampling_rate=None, mfcc=False):
 
     audio, sr = librosa.load(file_path, sr=sampling_rate, res_type='kaiser_best')
 
+   
     # Extract the features
     prediction_feature = get_spectogram(audio, sr, hop_length=hop_length, n_mels=n_mels)
     if mfcc:
         prediction_feature = extract_features(file_path=file_path, n_mfcc=40, sampling_rate=None, num_seg=5, augment=False, split=False, label="Whistling")
-
+    print(prediction_feature[0].shape[1])
     input_shape = (1, prediction_feature[0].shape[0], prediction_feature[0].shape[1], 1)
 
     visualize_class_activation_map(model_path, prediction_feature[0], 'test.png', 'original.png', input_shape, mfcc=mfcc, sound='rhonchus')
@@ -109,4 +110,4 @@ if __name__ == '__main__':
 
     audio_path = "src/data/recordings/PV19064/PV19064_270119_R.wav"
 
-    get_prediction(audio_path, model_path, None, mfcc=True)
+    get_prediction(audio_path, model_path, None, mfcc=False)

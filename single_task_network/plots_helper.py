@@ -75,11 +75,11 @@ def plot_history(history, i):
 
 def plot_kfold(model_history, save_path, label='Whistling'):
     plt.title('Accuracies vs Epochs')
-    plt.plot(model_history[0].history['val_{label}_accuracy'.format(label=label.lower())], label='{label} Training Fold 1'.format(label=label))
-    plt.plot(model_history[1].history['val_{label}_accuracy'.format(label=label.lower())], label='{label} Training Fold 2'.format(label=label))
-    plt.plot(model_history[2].history['val_{label}_accuracy'.format(label=label.lower())], label='{label} Training Fold 3'.format(label=label))
-    plt.plot(model_history[3].history['val_{label}_accuracy'.format(label=label.lower())], label='{label} Training Fold 4'.format(label=label))
-    plt.plot(model_history[4].history['val_{label}_accuracy'.format(label=label.lower())], label='{label} Training Fold 5'.format(label=label))
+    plt.plot(model_history[0].history['val_accuracy'], label='{label} Training Fold 1'.format(label=label))
+    plt.plot(model_history[1].history['val_accuracy'], label='{label} Training Fold 2'.format(label=label))
+    plt.plot(model_history[2].history['val_accuracy'], label='{label} Training Fold 3'.format(label=label))
+    plt.plot(model_history[3].history['val_accuracy'], label='{label} Training Fold 4'.format(label=label))
+    plt.plot(model_history[4].history['val_accuracy'], label='{label} Training Fold 5'.format(label=label))
     plt.legend()
     plt.savefig(save_path)
     plt.show()

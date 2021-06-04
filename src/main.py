@@ -24,7 +24,7 @@ SPECTROGRAM = False
 if __name__ == '__main__':
     # Load the data
     data = pd.read_csv('src/data/labels_int.csv')
-    config = Config(epoch=200, batch=32, n_mfcc=40, num_seg=5, sr=None)
+    config = Config(epoch=500, batch=32, n_mfcc=20, num_seg=5, sr=None)
 
     path_to_model = 'src/saved_models/weights.best.multitask.hdf5'
 
@@ -45,6 +45,8 @@ if __name__ == '__main__':
 
     kf = kfold_split(X_train, Y_train, Y1_train, n_splits=5)
     for train, test in kf:
+
+        # Split the taining into fold_training and fold_validation
         x_train, x_test, y_train, y_test, y1_train, y1_test = \
             X_train[train], X_train[test], Y_train[train], Y_train[test], Y1_train[train], Y1_train[test]
 
@@ -55,7 +57,7 @@ if __name__ == '__main__':
         test_metrics = {'whistling': 'accuracy', 'rhonchus': 'accuracy'}
         input_shape = (X_train.shape[1], X_train.shape[2], 1)
         multi_model = MultiModel(input_shape=input_shape, test_metrics=test_metrics, drop_rate=0.25, lr=0.0001,
-                                 loss_weights={'whistling': 0.75, 'rhonchus': 0.25})
+                                 loss_weights={'whistling': 1, 'rhonchus': 0.5})
         model = multi_model.get_custom_model(batch_normalization=True)
         if SPECTROGRAM:
             model = multi_model.get_pretrained_model()
@@ -82,18 +84,15 @@ if __name__ == '__main__':
     pred = model.predict(X_test)
     whistling_pred = pred[0]
     rhonchus_pred = pred[1]
-    
     whistling_pred = np.argmax(whistling_pred, axis=-1)
-    rhonchus_pred = [np.argmax(p) for p in rhonchus_pred]
-    Y1_test = [np.argmax(p) for p in Y1_test]
+    rhonchus_pred = np.argmax(rhonchus_pred, axis=1)
+    Y1_test = np.argmax(Y1_test, axis=1)
 
     # Generate reports
     whistling_report = classification_report(Y_test, whistling_pred, output_dict=True)
     rhonchus_report = classification_report(Y1_test, rhonchus_pred, output_dict=True)
-    
     whistling_df = pd.DataFrame(whistling_report).transpose()
     rhonchus_df = pd.DataFrame(rhonchus_report).transpose()
-
     df_scores = pd.DataFrame(scores)
     df_scores.loc['mean'] = df_scores.mean()
 

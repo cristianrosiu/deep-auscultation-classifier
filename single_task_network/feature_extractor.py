@@ -100,8 +100,8 @@ def extract_features(file_path, n_mfcc, sampling_rate=None):
 def get_features_df(data, sampling_rate=None, label_row='rhonchus', n_mfcc=20):
     features = []
     for index, row in data.iterrows():
-        file_name_l = 'recordings/{id}/{recording}_L.wav'.format(id=row['seal_id'], recording=row['rec_name'])
-        file_name_r = 'recordings/{id}/{recording}_R.wav'.format(id=row['seal_id'], recording=row['rec_name'])
+        file_name_l = 'src/data/recordings/{id}/{recording}_L.wav'.format(id=row['seal_id'], recording=row['rec_name'])
+        file_name_r = 'src/data/recordings/{id}/{recording}_R.wav'.format(id=row['seal_id'], recording=row['rec_name'])
 
         class_label_l = row[label_row + '_l']
         class_label_r = row[label_row + '_r']
