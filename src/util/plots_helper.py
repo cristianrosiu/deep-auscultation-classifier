@@ -2,7 +2,6 @@ import itertools
 import matplotlib.pyplot as plt
 import numpy as np
 
-
 def plot_confusion_matrix(cm, classes, save_path,
                           normalize=False,
                           title='Confusion matrix',
@@ -38,6 +37,7 @@ def plot_confusion_matrix(cm, classes, save_path,
     plt.savefig(save_path)
     plt.show()
 
+
 def plot_roc(fpr, tpr, auc, save_path):
     """
         This function plots the ROC-AUC Curve
@@ -53,33 +53,40 @@ def plot_roc(fpr, tpr, auc, save_path):
     plt.show()
 
 
-def plot_history(history, i):
+def plot_history(history, i, save_path):
     fig, axs = plt.subplots(2)
 
     # Accuracy subplot
-    axs[0].plot(history.history["accuracy"], label='Train Accuracy')
-    axs[0].plot(history.history["val_accuracy"], label='Test Accuracy')
+    axs[0].plot(history.history[0]["accuracy"], label='Train Accuracy')
+    axs[0].plot(history.history[0]["val_accuracy"], label='Test Accuracy')
     axs[0].set_ylabel("Accuracy")
     axs[0].legend(loc="lower right")
     axs[0].set_title("CNN Accuracy {i}".format(i=i))
 
     # Error subplot
-    axs[1].plot(history.history["loss"], label='Train Error')
-    axs[1].plot(history.history["val_loss"], label='Test Error')
+    axs[1].plot(history.history[0]["loss"], label='Train Error')
+    axs[1].plot(history.history[0]["val_loss"], label='Test Error')
     axs[1].set_ylabel("Error")
     axs[1].set_xlabel("Epoch")
     axs[1].legend(loc="upper right")
     axs[1].set_title("CNN Error")
 
+    plt.savefig(save_path)
     plt.show()
+
 
 def plot_kfold(model_history, save_path, label='Whistling'):
     plt.title('Accuracies vs Epochs')
-    plt.plot(model_history[0].history['val_{label}_accuracy'.format(label=label.lower())], label='{label} Training Fold 1'.format(label=label))
-    plt.plot(model_history[1].history['val_{label}_accuracy'.format(label=label.lower())], label='{label} Training Fold 2'.format(label=label))
-    plt.plot(model_history[2].history['val_{label}_accuracy'.format(label=label.lower())], label='{label} Training Fold 3'.format(label=label))
-    plt.plot(model_history[3].history['val_{label}_accuracy'.format(label=label.lower())], label='{label} Training Fold 4'.format(label=label))
-    plt.plot(model_history[4].history['val_{label}_accuracy'.format(label=label.lower())], label='{label} Training Fold 5'.format(label=label))
+    plt.plot(model_history[0].history['val_{label}_accuracy'.format(label=label.lower())],
+             label='{label} Training Fold 1'.format(label=label))
+    plt.plot(model_history[1].history['val_{label}_accuracy'.format(label=label.lower())],
+             label='{label} Training Fold 2'.format(label=label))
+    plt.plot(model_history[2].history['val_{label}_accuracy'.format(label=label.lower())],
+             label='{label} Training Fold 3'.format(label=label))
+    plt.plot(model_history[3].history['val_{label}_accuracy'.format(label=label.lower())],
+             label='{label} Training Fold 4'.format(label=label))
+    plt.plot(model_history[4].history['val_{label}_accuracy'.format(label=label.lower())],
+             label='{label} Training Fold 5'.format(label=label))
     plt.legend()
     plt.savefig(save_path)
     plt.show()

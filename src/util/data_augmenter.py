@@ -1,5 +1,4 @@
 from audiomentations import Compose, AddGaussianNoise, TimeStretch, PitchShift, Shift
-import numpy as np
 
 
 def augment_sample(y, sample_rate=4000):
@@ -11,4 +10,3 @@ def augment_sample(y, sample_rate=4000):
     ])
 
     return augment(y, sample_rate=sample_rate)
-

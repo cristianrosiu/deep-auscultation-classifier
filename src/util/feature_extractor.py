@@ -5,8 +5,8 @@ import pandas as pd
 import math
 import numpy as np
 import matplotlib.pyplot as plt
-from util.data_augmenter import augment_sample
-
+from src.util.data_augmenter import augment_sample
+from sklearn import preprocessing
 
 """
 This script allows the user to extract the mel-cepstral coefficients array from a 
@@ -29,6 +29,7 @@ functions:
 # In our case all audio files have the same length of 30
 AUDIO_LENGTH = 30
 
+
 def scale_minmax(X, min=0.0, max=1.0):
     X_std = (X - X.min()) / (X.max() - X.min())
     X_scaled = X_std * (max - min) + min
@@ -50,28 +51,6 @@ def get_mfcc(features):
     return data
 
 
-def get_spectogram(y, sr, n_fft, hop_length, win_length, n_mels, fmin, fmax):
-
-    S = librosa.core.stft(y, n_fft=hop_length*2, hop_length=hop_length, win_length=win_length)
-    mels = librosa.feature.melspectrogram(y=y, sr=sr, S=S, n_mels=n_mels, fmin=fmin, fmax=fmax)
-
-    
-    # Truncate at the end of only have windows full data. Alternative: zero-pad
-    start_frame = window_size
-    end_frame = window_hop * math.floor(float(frames.shape[1]) / window_hop)
-    windows=[]
-    for frame_idx in range(start_frame, end_frame, window_hop):
-        window = mels[:, frame_idx-window_size:frame_idx]
-
-        mels = np.log(window + 1e-9)
-        mels -= np.mean(mels)
-        mels /= np.std(mels)
-
-        assert mels.shape == (n_mels, window_size)
-        windows.append(mels)
-    
-    return windows
-
 def get_expected_len(audio_length, sampling_rate=None):
     sample_per_audio = 4000 * audio_length
     if sampling_rate is not None:
@@ -79,8 +58,10 @@ def get_expected_len(audio_length, sampling_rate=None):
     return math.ceil(sample_per_audio / 512)
 
 
-def extract_features(file_path, n_mfcc, num_seg, label, sampling_rate=None, augment=False, split=False):
+def extract_features(file_path, n_mfcc, num_seg, sampling_rate=None, split=False, pcen=False):
     """Returns a list which contains the mfcc features of each segment.
+    :param split:
+    :param pcen:
     :param file_path: Path to the audio file
     :param sampling_rate: Sampling rate value used to resample the audio. A default value of None
     will take the original sampling rate of the audio file (in our case is 4000Hz)
@@ -89,38 +70,40 @@ def extract_features(file_path, n_mfcc, num_seg, label, sampling_rate=None, augm
     :return: A list containing the MFCC features of each segment in the original audio
     """
 
-    AUDIO_LENGTH = 30
     SAMPLE_PER_AUDIO = 4000 * AUDIO_LENGTH
     if sampling_rate is not None:
         SAMPLE_PER_AUDIO = sampling_rate * AUDIO_LENGTH
 
     try:
         audio, sample_rate = librosa.load(file_path, sr=sampling_rate, res_type='kaiser_best')
-        samples_per_seg = int(SAMPLE_PER_AUDIO / num_seg)
-        expected_mfcc_len = math.ceil(samples_per_seg / 512)
-        samples_per_seg = int((4000 * librosa.get_duration(audio, sample_rate)) / num_seg)
-
         data = []
-
-
-        if split:
-            for seg in range(num_seg):
-                start_seg = samples_per_seg * seg
-                end_seg = start_seg + samples_per_seg
-                mfccs = librosa.feature.mfcc(y=audio[start_seg:end_seg], sr=sample_rate, n_mfcc=n_mfcc)
-                pad_width = expected_mfcc_len - mfccs.shape[1]
-                mfccs = np.pad(mfccs, pad_width=((0, 0), (0, pad_width)), mode='constant')
-                data.append(mfccs)
+        # Generate features
+        if pcen is True:
+            S = librosa.feature.melspectrogram(audio, sr=sample_rate, power=1)
+            pcen_S = librosa.pcen(S * (2 ** 31))
+            pad_width = 235 - pcen_S.shape[1]
+            img = np.pad(pcen_S, pad_width=((0, 0), (0, pad_width)), mode='constant')
+            data.append(img)
         else:
-            expected_mfcc_len = get_expected_len(AUDIO_LENGTH, sampling_rate)
-            # Load audio file
-            audio, sample_rate = librosa.load(file_path, sr=sampling_rate, res_type='kaiser_fast')
-            # Generate features
-            mfccs = librosa.feature.mfcc(y=audio, sr=sample_rate, n_mfcc=n_mfcc)
-            print(mfccs.shape)
-            pad_width = expected_mfcc_len - mfccs.shape[1]
-            mfccs = np.pad(mfccs, pad_width=((0, 0), (0, pad_width)), mode='constant')
-            data.append(mfccs)
+            if split:
+                samples_per_seg = int(SAMPLE_PER_AUDIO / num_seg)
+                expected_mfcc_len = math.ceil(samples_per_seg / 512)
+                samples_per_seg = int((4000 * librosa.get_duration(audio, sample_rate)) / num_seg)
+                for seg in range(num_seg):
+                    start_seg = samples_per_seg * seg
+                    end_seg = start_seg + samples_per_seg
+                    coefficients = librosa.feature.mfcc(y=audio[start_seg:end_seg], sr=sample_rate, n_mfcc=n_mfcc)
+                    pad_width = expected_mfcc_len - coefficients.shape[1]
+                    coefficients = np.pad(coefficients, pad_width=((0, 0), (0, pad_width)), mode='constant')
+                    data.append(coefficients)
+            else:
+                expected_mfcc_len = get_expected_len(AUDIO_LENGTH, sampling_rate)
+                # Generate features
+                mfccs = librosa.feature.mfcc(y=audio, sr=sample_rate, n_mfcc=n_mfcc)
+                # Pad with 0's in case the audio doesn't have length 30
+                pad_width = expected_mfcc_len - mfccs.shape[1]
+                img = np.pad(mfccs, pad_width=((0, 0), (0, pad_width)), mode='constant')
+                data.append(img)
 
     except Exception as e:
         print("Error encountered while parsing file: ", file_path)
@@ -130,43 +113,37 @@ def extract_features(file_path, n_mfcc, num_seg, label, sampling_rate=None, augm
     return data
 
 
-def get_features_df(data, sampling_rate=None, n_mfcc=20, num_seg=5, spectogram=False):
+def get_features_df(data, sampling_rate=None, n_mfcc=20, num_seg=5, split=False, pcen=False, augment=False):
     features = []
     for index, row in data.iterrows():
-        file_name_l = 'src/data/recordings/{id}/{recording}_L.wav'.format(id=row['seal_id'], recording=row['rec_name'])
-        file_name_r = 'src/data/recordings/{id}/{recording}_R.wav'.format(id=row['seal_id'], recording=row['rec_name'])
+        if augment is False:
+            file_name_l = 'data/recordings/{id}/{recording}_L.wav'.format(id=row['seal_id'], recording=row['rec_name'])
+            file_name_r = 'data/recordings/{id}/{recording}_R.wav'.format(id=row['seal_id'], recording=row['rec_name'])
 
-        features_data_l = None
-        features_data_r = None
-        if spectogram:
-            # settings
-            hop_length = 512  # number of samples per time-step in spectrogram
-            n_mels = 128  # number of bins in spectrogram. Height of image
+            features_data_l = extract_features(file_name_l, n_mfcc=n_mfcc, sampling_rate=sampling_rate, num_seg=num_seg,
+                                               split=split, pcen=pcen)
+            features_data_r = extract_features(file_name_r, n_mfcc=n_mfcc, sampling_rate=sampling_rate, num_seg=num_seg,
+                                               split=split, pcen=pcen)
 
-            # load audio. Using example from librosa
-            signal_l, sr = librosa.load(file_name_l, sr=None)
-            signal_r, sr = librosa.load(file_name_r, sr=None)
-
-            features_data_l = get_spectogram(signal_l, sr, hop_length=hop_length, n_mels=n_mels)
-            features_data_r = get_spectogram(signal_r, sr, hop_length=hop_length, n_mels=n_mels)
-        else:
-            features_data_l = extract_features(file_name_l, n_mfcc=n_mfcc, sampling_rate=sampling_rate, num_seg=num_seg,label=row['rhonchus_l'], augment=False, split=False)
-            features_data_r = extract_features(file_name_r, n_mfcc=n_mfcc, sampling_rate=sampling_rate, num_seg=num_seg, label=row['rhonchus_r'], augment=False, split=False)
-        
-       
-        if spectogram:
-            features.append([features_data_l, [row['whistling_l'], row['rhonchus_l']]])
-            features.append([features_data_r, [row['whistling_r'], row['rhonchus_r']]])
-        else:
             for left_lung in features_data_l:
                 features.append([left_lung, [row['whistling_l'], row['rhonchus_l']]])
             for right_lung in features_data_r:
                 features.append([right_lung, [row['whistling_r'], row['rhonchus_r']]])
-        
+        else:
+            file_name = 'data/augmented_recordings/{name}.wav'.format(name=row['rec_name'])
+            features_data = extract_features(file_name, n_mfcc=n_mfcc, sampling_rate=sampling_rate, num_seg=num_seg,
+                                             split=split, pcen=pcen)
+            row_idx = row['row_id']
+
+            if '_r' in row_idx:
+                for lung in features_data:
+                    features.append([lung, [row['whistling_r'], row['rhonchus_r']]])
+            elif '_l' in row_idx:
+                for lung in features_data:
+                    features.append([lung, [row['whistling_l'], row['rhonchus_l']]])
 
     features_df = pd.DataFrame(features, columns=['feature', 'class_labels'])
 
     print('Finished feature extraction from ', len(features_df), ' files')
 
     return features_df
-
