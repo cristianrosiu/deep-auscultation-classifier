@@ -1,11 +1,11 @@
 # Custom
 import numpy as np
-from util.plots_helper import plot_confusion_matrix, plot_roc, plot_kfold, plot_history
+from util.plots_helper import plot_confusion_matrix, plot_roc
 
-from util.feature_extractor import get_features_df
+from src.features.feature_extractor import get_features_df
 from util.config import Config
-from util.data_split import split_data, kfold_split
-from util.multi_model import MultiModel, categorical_focal_loss
+from util.data_split import split_data
+from src.model.multi_models import MultiModel
 
 # Keras
 from tensorflow.keras.callbacks import ModelCheckpoint

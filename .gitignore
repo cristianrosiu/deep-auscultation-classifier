@@ -152,5 +152,5 @@ crashlytics.properties
 crashlytics-build.properties
 fabric.properties
 
-src/saved_models/
-src/saved_models/*
+src/model/saved_models/
+src/model/saved_models/*

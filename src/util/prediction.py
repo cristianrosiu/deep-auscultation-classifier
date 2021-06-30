@@ -1,5 +1,4 @@
-from scipy.ndimage.measurements import label
-from feature_extractor import get_spectogram, get_mfcc, extract_features
+from src.features.feature_extractor import get_spectogram, get_mfcc, extract_features
 import librosa
 import numpy as np
 from keras.models import load_model
