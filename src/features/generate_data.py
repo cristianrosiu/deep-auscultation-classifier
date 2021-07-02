@@ -4,11 +4,9 @@ import numpy as np
 from features.feature_extractor import extract_features
 
 
-def generate_data(path_to_metadata='../data/labels_int.csv', path_to_data='../data/recordings'):
+def generate_data(path_to_metadata='../data/metadata.csv', path_to_data='../data/recordings', pcen=False):
     metadata = pd.read_csv(path_to_metadata)
     metadata = metadata.sample(frac=1).reset_index(drop=True)
-
-    pcen = False
 
     features_df = extract_features(metadata, path_to_data, sr=None, pcen=pcen)
 

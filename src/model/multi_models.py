@@ -59,7 +59,7 @@ def custom_model(input_shape, weights=None, conv_dr=0.2, survival=False):
     return model
 
 
-def res_model(input_shape, trainable_layers, weights=None, add_dense=False):
+def res_model(input_shape, trainable_layers=0, weights=None, add_dense=False):
     if weights is None:
         weights = {'whistling': 1, 'rhonchus': 1}
 

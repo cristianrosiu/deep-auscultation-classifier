@@ -1,6 +1,7 @@
 import itertools
 import matplotlib.pyplot as plt
 import numpy as np
+from sklearn import metrics
 
 
 def plot_confusion_matrix(cm, classes, save_path,
@@ -20,15 +21,14 @@ def plot_confusion_matrix(cm, classes, save_path,
 
     if normalize:
         cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
+        cm = float('%.2f' % (cm))
         print("Normalized confusion matrix")
     else:
         print('Confusion matrix, without normalization')
 
-    print(cm)
-
     thresh = cm.max() / 2.
     for i, j in itertools.product(range(cm.shape[0]), range(cm.shape[1])):
-        plt.text(j, i, cm[i, j],
+        plt.text(j, i, format(cm[i, j], '.2f'),
                  horizontalalignment="center",
                  color="white" if cm[i, j] > thresh else "black")
 
@@ -54,40 +54,35 @@ def plot_roc(fpr, tpr, auc, save_path):
     plt.show()
 
 
-def plot_history(history, i, save_path):
-    fig, axs = plt.subplots(2)
+def plot_history(history, save_path):
+    # fig, axs = plt.subplots(nrows=2, ncols=2)
+    fig = plt.figure(constrained_layout=False, figsize=(8, 4))
 
-    # Accuracy subplot
-    axs[0].plot(history.history[0]["accuracy"], label='Train Accuracy')
-    axs[0].plot(history.history[0]["val_accuracy"], label='Test Accuracy')
-    axs[0].set_ylabel("Accuracy")
-    axs[0].legend(loc="lower right")
-    axs[0].set_title("CNN Accuracy {i}".format(i=i))
+    gs = fig.add_gridspec(2, 2)
+    ax1 = fig.add_subplot(gs[0, 0])
+    ax2 = fig.add_subplot(gs[0, 1])
+    ax3 = fig.add_subplot(gs[1, :])
 
-    # Error subplot
-    axs[1].plot(history.history[0]["loss"], label='Train Error')
-    axs[1].plot(history.history[0]["val_loss"], label='Test Error')
-    axs[1].set_ylabel("Error")
-    axs[1].set_xlabel("Epoch")
-    axs[1].legend(loc="upper right")
-    axs[1].set_title("CNN Error")
+    ax1.plot(history.history["whistling_accuracy"], label='Whistling Train')
+    ax1.plot(history.history["val_whistling_accuracy"], label='Whistling Test')
 
-    plt.savefig(save_path)
-    plt.show()
+    ax2.plot(history.history["rhonchus_accuracy"], label='Rhonchus Train')
+    ax2.plot(history.history["val_rhonchus_accuracy"], label='Rhonchus Test')
 
+    ax1.set_ylabel("Accuracy")
+    ax1.legend(loc="lower right")
+    ax1.set_title("CNN Accuracy")
 
-def plot_kfold(model_history, save_path, label='Whistling'):
-    plt.title('Accuracies vs Epochs')
-    plt.plot(model_history[0].history['val_{label}_accuracy'.format(label=label.lower())],
-             label='{label} Training Fold 1'.format(label=label))
-    plt.plot(model_history[1].history['val_{label}_accuracy'.format(label=label.lower())],
-             label='{label} Training Fold 2'.format(label=label))
-    plt.plot(model_history[2].history['val_{label}_accuracy'.format(label=label.lower())],
-             label='{label} Training Fold 3'.format(label=label))
-    plt.plot(model_history[3].history['val_{label}_accuracy'.format(label=label.lower())],
-             label='{label} Training Fold 4'.format(label=label))
-    plt.plot(model_history[4].history['val_{label}_accuracy'.format(label=label.lower())],
-             label='{label} Training Fold 5'.format(label=label))
-    plt.legend()
+    ax2.set_ylabel("Accuracy")
+    ax2.legend(loc="lower right")
+    ax2.set_title("CNN Accuracy")
+
+    ax3.plot(history.history["loss"], label='Train Error')
+    ax3.plot(history.history["val_loss"], label='Test Error')
+    ax3.set_ylabel("Error")
+    ax3.set_xlabel("Epoch")
+    ax3.legend(loc="upper right")
+    ax3.set_title("CNN Error")
+
     plt.savefig(save_path)
     plt.show()

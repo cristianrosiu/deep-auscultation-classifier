@@ -21,7 +21,7 @@ SPECTROGRAM = False
 
 if __name__ == '__main__':
     # Load the data
-    data = pd.read_csv('data/labels_int.csv')
+    data = pd.read_csv('data/metadata.csv')
     augmented_data = pd.read_csv('data/augmented.csv')
 
     config = Config(epoch=1000, batch=32, n_mfcc=40, num_seg=5, sr=None)
