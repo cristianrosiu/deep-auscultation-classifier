@@ -42,16 +42,15 @@ def pcen2bw(pcen):
     return img
 
 
-def extract_mfcc(y, sr=None, n_mfcc=13, split=False, num_seg=5, n_fft=2048, hop_length=512):
+def extract_mfcc(y, sr=None, n_mfcc=13, split=False, num_seg=5, n_fft=2048, hop_length=256):
     """Returns a list which contains the mfcc features of each segment.
-    :param y:
-    :param sr:
-    :param n_mfcc: Path to the audio file
-    :param split: Sampling rate value used to resample the audio. A default value of None
-    will take the original sampling rate of the audio file (in our case is 4000Hz)
-    :param num_seg: Number of mfcc which will be extracted over a period of time
-    :param n_fft: Number of segments in which the audio will divide
-    :param hop_length: Number of segments in which the audio will divide
+    :param y: Audio signal
+    :param sr: Sampling rate
+    :param n_mfcc: Number of MFCC features to be extracted
+    :param split: Bool that tells the script to either split or not split the audio signal into segments
+    :param num_seg: Number of segments in which the audio will divide
+    :param n_fft: Window size
+    :param hop_length: Number of samples between each successive FFT window
     :return: A list containing the MFCC features of each segment in the original audio
     """
 
@@ -64,7 +63,7 @@ def extract_mfcc(y, sr=None, n_mfcc=13, split=False, num_seg=5, n_fft=2048, hop_
                 start_seg = samples_per_seg * seg
                 end_seg = start_seg + samples_per_seg
                 mfccs = librosa.feature.mfcc(y=y[start_seg:end_seg], sr=sr,
-                                             n_mfcc=n_mfcc)  # , n_fft=n_fft, hop_length=hop_length)
+                                             n_mfcc=n_mfcc, n_fft=n_fft, hop_length=hop_length)
                 mfccs = mfccs.T
                 if len(mfccs) == num_mfcc_vectors_per_segment:
                     data.append(mfccs.tolist())

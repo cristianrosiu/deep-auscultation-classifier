@@ -5,6 +5,15 @@ from features.feature_extractor import extract_features
 
 
 def generate_data(path_to_metadata='../data/metadata.csv', path_to_data='../data/recordings', pcen=False):
+    """
+    This function generates the data necessary for our model to learn.
+
+    :param path_to_metadata: Path to the .csv containing information about our dataset
+    :param path_to_data: Path to the actual audio recordings
+    :param pcen: Boolean that checks whether or not the script should extract PCEN features or not
+    :return: Generated data and the ground truth labels of each task
+    """
+
     metadata = pd.read_csv(path_to_metadata)
     metadata = metadata.sample(frac=1).reset_index(drop=True)
 

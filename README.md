@@ -14,8 +14,32 @@ Pulmonary auscultation is one of the most valuable and fundamental tools availab
     │   └── util                # Utility scripts
     └── README.md
 
-## Getting started
-All the scripts in this project are properly documented and easy to use/change.
+## Important Prerequisites
 
-### Model's folder
-The most importan scripts can be found in the `model` folder. In here the `training.py` script is the one responsible for everything. It trains the model and generates the results based on the prediction on the test input.
+![librosa](logos/librosa_logo.png)
+
+![tensorflow](logos/tensorflow_logo.png)
+
+## Getting started
+
+### Model folder
+The most important scripts can be found in the `model` folder. In here the `training.py` script is the one responsible 
+for everything. It trains the model and generates the results based on the prediction of our test set.
+
+The `prediction.py` script uses the weights of the best model to compute the results and plots, including the 
+`classification reports`, `confusion matrices`, `learning curves`, `ROC curves` and `Class activation maps (CAMs)`
+
+### Features Folder
+The `feature_exctractor.py` script contains the utility functions used to extract the two types of audio features 
+used in this paper. In order to achieve this we have utilized `librosa` python library which provided us with the 
+necessary functionality to extract the MFCC and PCEN features. 
+
+The `generate_data.py` script is there to help extract the features and labels of all audio files and combine them 
+into a `pandas` dataframe for later use in our `training.py` script.
+
+### Config File
+In the main `src` folder, the file `config.yaml` holds the configuration parameters used for training the
+model. The boolean parameter `SURVIVAL` switches between classifying `survial` and classifying `wheezes and rhonchus`.
+`PCEN` parameter can be used to tell our classifier to use the PCEN spectrograms as its primary inputs. The 
+`BATCH`, `EPOCH` can be used to tell the model how to train the data and for how long. Lastly,
+`SPLITS` parameter refers to how many folds to be used when training.

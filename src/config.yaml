@@ -1,0 +1,6 @@
+TRAINING:
+  SURVIVAL: False
+  PCEN: False
+  BATCH: 32
+  EPOCH: 100
+  SPLITS: 5

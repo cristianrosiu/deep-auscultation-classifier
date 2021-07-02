@@ -11,8 +11,25 @@ WHISTLING_NODES = 1
 RHONCHUS_NODES = 4
 SURVIVAL_NODES = 1
 
+'''
+In this script there can be found the two types of MTL model architectures that were used
+in the research paper.
+
+The custom model was mainly built to be used togheter with the MFCC inpu, however, it also accepts 
+PCEN spectrograms. It has 4 convolutional blocks, each block following the pattern: Conv2D->Activation->MaxPool->Dropout.
+
+'''
+
 
 def custom_model(input_shape, weights=None, conv_dr=0.2, survival=False):
+    '''
+
+    :param input_shape:
+    :param weights:
+    :param conv_dr:
+    :param survival:
+    :return:
+    '''
     if weights is None:
         weights = {'whistling': 1, 'rhonchus': 1}
 
@@ -51,7 +68,8 @@ def custom_model(input_shape, weights=None, conv_dr=0.2, survival=False):
                   loss_weights=weights,
                   optimizer=Adam(learning_rate=0.0005), metrics='accuracy')
     if survival:
-        model.compile(loss={'whistling': 'binary_crossentropy', 'rhonchus': 'sparse_categorical_crossentropy', 'survival':'binary_crossentropy'},
+        model.compile(loss={'whistling': 'binary_crossentropy', 'rhonchus': 'sparse_categorical_crossentropy',
+                            'survival': 'binary_crossentropy'},
                       loss_weights=weights,
                       optimizer=Adam(learning_rate=0.0005), metrics='accuracy')
     model.summary()
