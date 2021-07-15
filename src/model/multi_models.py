@@ -15,21 +15,22 @@ SURVIVAL_NODES = 1
 In this script there can be found the two types of MTL model architectures that were used
 in the research paper.
 
-The custom model was mainly built to be used togheter with the MFCC inpu, however, it also accepts 
+The custom model was mainly built to be used together with the MFCC input, however, it also accepts 
 PCEN spectrograms. It has 4 convolutional blocks, each block following the pattern: Conv2D->Activation->MaxPool->Dropout.
 
 '''
 
 
 def custom_model(input_shape, weights=None, conv_dr=0.2, survival=False):
-    '''
+    """
+    Builds and returns our custom made CNN model.
 
-    :param input_shape:
-    :param weights:
-    :param conv_dr:
-    :param survival:
-    :return:
-    '''
+    :param input_shape: shape of the input
+    :param weights: array containing the weights of each task
+    :param conv_dr: dropout rate of all convolutional layers
+    :param survival: Boolean for survival classification
+    :return: custom made model
+    """
     if weights is None:
         weights = {'whistling': 1, 'rhonchus': 1}
 
@@ -78,6 +79,15 @@ def custom_model(input_shape, weights=None, conv_dr=0.2, survival=False):
 
 
 def res_model(input_shape, trainable_layers=0, weights=None, add_dense=False):
+
+    """
+
+    :param input_shape: the shape of the input
+    :param trainable_layers: dictates how many trainable layers are taken from the ResNet50
+    :param weights: array containing the weight of each task
+    :param add_dense: controls the creation of dense layers after GAP layer
+    :return: ResNet50 model using MTL
+    """
     if weights is None:
         weights = {'whistling': 1, 'rhonchus': 1}
 

@@ -41,7 +41,7 @@ def plot_confusion_matrix(cm, classes, save_path,
 
 def plot_roc(fpr, tpr, auc, save_path):
     """
-        This function plots the ROC-AUC Curve
+    This function plots the ROC-AUC Curve
     """
     plt.figure(1)
     plt.plot([0, 1], [0, 1], 'k--')
@@ -55,7 +55,9 @@ def plot_roc(fpr, tpr, auc, save_path):
 
 
 def plot_history(history, save_path):
-    # fig, axs = plt.subplots(nrows=2, ncols=2)
+    """
+    Plots the training and validation history of a model.
+    """
     fig = plt.figure(constrained_layout=False, figsize=(8, 4))
 
     gs = fig.add_gridspec(2, 2)

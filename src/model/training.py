@@ -10,8 +10,10 @@ import numpy as np
 import pandas as pd
 
 if __name__ == '__main__':
+    # Generate the training configuration
     config = read_yaml('../config.yaml')
 
+    # Set up the weights and number of tasks
     weights = {}
     task_number = 2
     if config['TRAINING']['SURVIVAL']:
@@ -20,13 +22,14 @@ if __name__ == '__main__':
     else:
         weights = {'whistling': 0.8, 'rhonchus': 0.2}
 
-    # Get the data
+    # Generate the data
     X, y, y1, y2 = generate_data(pcen=config['TRAINING']['PCEN'])
 
     # Split data into Training and Test sets
     X_train, X_test, Y_train, Y_test, Y1_train, Y1_test, Y2_train, Y2_test = \
         train_test_split(X, y, y1, y2, test_size=0.1, random_state=42)
 
+    # Get the folds
     kfold = StratifiedKFold(n_splits=config['TRAINING']['SPLITS'], shuffle=True, random_state=42)
 
     # Save the best model, history based on accuracy
@@ -34,8 +37,8 @@ if __name__ == '__main__':
     best_history = None
     max_accuracy = -1
     fold = 0
-
     scores = []
+
     # KFold Validation
     for train, test in kfold.split(X_train, Y_train, Y1_train):
         # Split the training set into training and validation
@@ -43,7 +46,7 @@ if __name__ == '__main__':
             X_train[train], X_train[test], Y_train[train], Y_train[test], Y1_train[train], Y1_train[test], Y2_train[
                 train], Y2_train[test]
 
-        # Reshape train and test data to meet the requirments of a CNN input
+        # Reshape train and test data to meet the requirements of a CNN input
         x_train = x_train.reshape(x_train.shape[0], x_train.shape[1], x_train.shape[2], 1)
         x_test = x_test.reshape(x_test.shape[0], x_test.shape[1], x_test.shape[2], 1)
 
@@ -75,6 +78,7 @@ if __name__ == '__main__':
         # Evaluate the model
         score = model.evaluate(x_test, test_labels, verbose=0)
         score = score[-task_number:]
+
         # Save accuracy of wheezes and rhonchus
         scores.append(score)
 
